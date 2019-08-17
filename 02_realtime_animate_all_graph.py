@@ -150,7 +150,7 @@ line_decrease, = ax.plot([], [], 'b')
 line_threshold, = ax.plot([], [], 'y')
 line_peak, = ax.plot([], [], "X")
 
-# 데이터 출력을 위한 변수들
+# 데이터 출력을 위한 전역변수들
 CHUNK = 1024
 RATE = 44100
 T = 1.0 / 44100.0

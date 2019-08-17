@@ -87,7 +87,6 @@ T = 1.0 / 44100.0
 p = pyaudio.PyAudio()
 stream = p.open(format=pyaudio.paInt16, channels=1, rate=RATE, input=True,
                 frames_per_buffer=CHUNK)
-
 sum_y_list = []
 
 for i in range(0, 1000):
