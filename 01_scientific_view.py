@@ -93,7 +93,7 @@ sum_now_data = 0
 sum_before_data = 0
 
 
-for i in range(0, 100):
+for i in range(0, 200):
     data = np.fromstring(stream.read(CHUNK), dtype=np.int16)  # 마이크에서 데이터를 읽어옴 (데이터 길이 1024)
     abs_data = np.abs(data)
     mean_abs_data = np.mean(abs_data)  # 데이터의 크기 분석(절대값 -> 평균)
@@ -119,7 +119,7 @@ for i in range(0, 100):
         max_peak = 0
         std_peaks, _ = find_peaks(y, height=1500)  # 1500을 넘는 peak값을 찾는다. (max를 찾기 위한 표준 peak들)
         # print('std_peak : ', std_peaks)
-        if len(std_peaks) > 0  and sum_now_data > (sum_before_data + 1800000):
+        if len(std_peaks) > 0  and sum_now_data > (sum_before_data + 1800000) and sum_now_data > 8000000:
             max_peak = np.max(y[std_peaks])  # std_peaks에 있는 값들 중에서 가장 큰 값을 찾는다.
             std_threshold = max_peak * 0.6  # max_peak을 이용하여 임계값을 설정한다.
             peaks, _ = find_peaks(y, height=std_threshold)  # 임계값을 넘는 peak만 음으로 인식한다.
@@ -135,24 +135,27 @@ for i in range(0, 100):
                 gye_name1 = scale(peaks1 * x_interval)
                 print(gye_name1)
 
-                if len(peaks1) > 0:
-                    plt.plot(x, origin_y, 'r')
-                    plt.plot(peaks * x_interval, y[peaks], "x")
-                    plt.plot(x, y, 'b')
-                    std_y = np.ones(int(n/2)) * std_threshold
-
-                    plt.plot(x, std_y)
-                    plt.annotate('threshold : %d' % (std_threshold), xy=(11, 10), xytext=(4000, 7500), size=10, ha='right', va='center')
-                    plt.annotate('%s' % str(gye_name1), xy=(11, 10), xytext=(4000, 7000), size=10, ha='right', va='center')
-                    plt.annotate('SUM_Y : %s' % str(sum_y), xy=(11, 10), xytext=(4000, 6500), size=10, ha='right', va='center')
-                    plt.xlim(0, 4000)
-                    plt.ylim(0, 8000)
-                    plt.savefig('./save/figure_%d.png' %i)
-                    plt.show()
+                # if len(peaks1) > 0:
+                #     plt.plot(x, origin_y, 'r')
+                #     plt.plot(peaks * x_interval, y[peaks], "x")
+                #     plt.plot(x, y, 'b')
+                #     std_y = np.ones(int(n/2)) * std_threshold
+                #
+                #     plt.plot(x, std_y)
+                #     plt.annotate('threshold : %d' % (std_threshold), xy=(11, 10), xytext=(4000, 7500), size=10, ha='right', va='center')
+                #     plt.annotate('%s' % str(gye_name1), xy=(11, 10), xytext=(4000, 7000), size=10, ha='right', va='center')
+                #     plt.annotate('SUM_Y : %s' % str(sum_y), xy=(11, 10), xytext=(4000, 6500), size=10, ha='right', va='center')
+                #     plt.xlim(0, 4000)
+                #     plt.ylim(0, 8000)
+                #     plt.savefig('./save/figure_%d.png' %i)
+                #     plt.show()
     sum_before_data = sum_now_data
 
 plt.plot(sum_y_list)
+plt.plot(sum_data_list, '*')
+
 plt.plot(sum_data_list)
+plt.savefig('figure.png')
 plt.show()
 stream.stop_stream()
 print('빠져나옴')
