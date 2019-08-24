@@ -131,24 +131,23 @@ for i in range(0, 1000):
             else:
                 multiple_freq_decrease(y, peaks)
                 peaks1, _ = find_peaks(y, height=std_threshold)
-                print('peaks :  ', peaks1)
+                # print('peaks :  ', peaks1)
                 gye_name1 = scale(peaks1 * x_interval)
                 print(gye_name1)
 
-                if len(peaks1) > 0:
-
-                    plt.plot(x, origin_y, 'r')
-                    plt.plot(peaks * x_interval, y[peaks], "x")
-                    plt.plot(x, y, 'b')
-                    std_y = np.ones(int(n/2)) * std_threshold
-
-                    plt.plot(x, std_y)
-                    plt.annotate('threshold : %d' % (std_threshold), xy=(11, 10), xytext=(4000, 7500), size=10, ha='right', va='center')
-                    plt.annotate('%s' % str(gye_name1), xy=(11, 10), xytext=(4000, 7000), size=10, ha='right', va='center')
-                    plt.annotate('SUM_Y : %s' % str(sum_y), xy=(11, 10), xytext=(4000, 6500), size=10, ha='right', va='center')
-                    plt.xlim(0, 4000)
-                    plt.ylim(0, 8000)
-                    plt.show()
+                # if len(peaks1) > 0:
+                #     plt.plot(x, origin_y, 'r')
+                #     plt.plot(peaks * x_interval, y[peaks], "x")
+                #     plt.plot(x, y, 'b')
+                #     std_y = np.ones(int(n/2)) * std_threshold
+                #
+                #     plt.plot(x, std_y)
+                #     plt.annotate('threshold : %d' % (std_threshold), xy=(11, 10), xytext=(4000, 7500), size=10, ha='right', va='center')
+                #     plt.annotate('%s' % str(gye_name1), xy=(11, 10), xytext=(4000, 7000), size=10, ha='right', va='center')
+                #     plt.annotate('SUM_Y : %s' % str(sum_y), xy=(11, 10), xytext=(4000, 6500), size=10, ha='right', va='center')
+                #     plt.xlim(0, 4000)
+                #     plt.ylim(0, 8000)
+                #     plt.savefig('./save/figure_
     sum_before_data = sum_now_data
 
 plt.plot(sum_y_list)
