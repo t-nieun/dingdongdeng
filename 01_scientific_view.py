@@ -93,6 +93,9 @@ sum_now_data = 0
 sum_before_data = 0
 sum_before_before_data = 0
 
+press_point_x_list = []
+press_point_y_list = []
+press_point_count = 0
 
 for i in range(0, 200):
     data = np.fromstring(stream.read(CHUNK), dtype=np.int16)  # 마이크에서 데이터를 읽어옴 (데이터 길이 1024)
@@ -135,6 +138,9 @@ for i in range(0, 200):
                 # print('peaks :  ', peaks1)
                 gye_name1 = scale(peaks1 * x_interval)
                 print(gye_name1)
+                print(gye_name1[1])
+                press_point_x_list.append(press_point_count)
+                press_point_y_list.append(sum_now_data)
 
                 # if len(peaks1) > 0:
                 #     plt.plot(x, origin_y, 'r')
@@ -150,15 +156,15 @@ for i in range(0, 200):
                 #     plt.ylim(0, 8000)
                 #     plt.savefig('./save/figure_%d.png' %i)
                 #     plt.show()
+        press_point_count = press_point_count + 1  # press_point 카운트
     sum_before_before_data = sum_before_data
     sum_before_data = sum_now_data
 
-
-
-plt.plot(sum_y_list)
-plt.plot(sum_data_list, '*')
-
+plt.plot(sum_y_list, 'b')
 plt.plot(sum_data_list)
+plt.plot(sum_data_list, '*')
+plt.plot(press_point_x_list, press_point_y_list, 'x', 'k')
+
 plt.savefig('figure.png')
 plt.show()
 stream.stop_stream()
