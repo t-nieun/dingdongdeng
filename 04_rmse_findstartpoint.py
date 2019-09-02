@@ -76,9 +76,9 @@ def multiple_freq_decrease(y_, peak_):
 
         for j in range(2, 6):  # 기준 피크로 부터 4배수 까지 감쇄하는데 이때 감쇄하는 값의 양쪽 값과 자신을 감쇄
             if (peak_[i] * j + 1) < 512:
-                y_[peak_[i] * j - 1] = y_[peak_[i] * j - 1] - y_[peak_[i]] **((1 / 3) ** (j-1))
-                y_[peak_[i] * j] = y_[peak_[i] * j] - y_[peak_[i]] * ((1 / 3) ** (j-1))
-                y_[peak_[i] * j + 1] = y_[peak_[i] * j + 1] - y_[peak_[i]] * ((1 / 3) ** (j-1))
+                y_[peak_[i] * j - 1] = y_[peak_[i] * j - 1] - y_[peak_[i]] ** ((1 / 3) ** (j - 1))
+                y_[peak_[i] * j] = y_[peak_[i] * j] - y_[peak_[i]] * ((1 / 3) ** (j - 1))
+                y_[peak_[i] * j + 1] = y_[peak_[i] * j + 1] - y_[peak_[i]] * ((1 / 3) ** (j - 1))
     return y_
 
 CHUNK = 1024
@@ -87,68 +87,59 @@ T = 1.0 / 44100.0
 p = pyaudio.PyAudio()
 stream = p.open(format=pyaudio.paInt16, channels=1, rate=RATE, input=True,
                 frames_per_buffer=CHUNK)
-sum_y_list = []
-sum_data_list = []
-sum_now_data = 0
-sum_before_data = 0
-sum_before_before_data = 0
-sum_keep_data = 0  # 시작점을 찾는 조건에 성립된 진폭 총양 데이터의 이전값 저장
-sum_keep_data_gyename = 0  # 시작점을 찾는 조건에 성립된 진폭 총양 데이터의 이전값에 대한 계이름
+
+keep_rmse = 0
+keep_keep_rmse = 0
+keep_gyename = 0
 gye_name1 = 0
 
 press_point_x_list = []
 press_point_y_list = []
 press_point_count = 0
+rmse_list = []
 
-for i in range(0, 1000):
+for i in range(0, 400):
     data = np.fromstring(stream.read(CHUNK), dtype=np.int16)  # 마이크에서 데이터를 읽어옴 (데이터 길이 1024)
+    n = len(data)
+    now_rmse = np.linalg.norm(data - 0) / np.sqrt(n)
+    rmse_list.append(now_rmse)
 
-    abs_data = np.abs(data)
-    mean_abs_data = np.mean(abs_data)  # 데이터의 크기 분석(절대값 -> 평균)
-    sum_now_data = np.sum(abs_data)  # 진폭의 총량 구하기
+    if keep_keep_rmse < keep_rmse and keep_rmse > now_rmse:
+        print(keep_gyename)
+        keep_gyename = gye_name1
+        plt.plot(x, origin_y, 'r')
+        plt.plot(peaks * x_interval, y[peaks], "x")
+        plt.plot(x, y, 'b')
+        std_y = np.ones(int(n / 2)) * std_threshold
 
-    if mean_abs_data > 1000:  # 피아노 소리가 들리지 않을 때는 계산하지 않음 (들어온 데이터의 크기로 분석)
+        plt.plot(x, std_y)
+        plt.annotate('threshold : %d' % (std_threshold), xy=(11, 10), xytext=(4000, 7500), size=10, ha='right',
+                     va='center')
+        plt.annotate('%s' % str(gye_name1), xy=(11, 10), xytext=(4000, 7000), size=10, ha='right', va='center')
+        # plt.annotate('SUM_Y : %s' % str(sum_y), xy=(11, 10), xytext=(4000, 6500), size=10, ha='right', va='center')
+        plt.xlim(0, 4000)
+        plt.ylim(0, 8000)
+        plt.show()
+
+    if now_rmse > 1000:  # 피아노 소리가 들리지 않을 때는 계산하지 않음 (들어온 데이터의 크기로 분석)
         n = len(data)
-        x, x_interval = np.linspace(0, 44100 / 2,  n / 2, retstep=True)  # x는 주파수 영역
-        y = librosa.autocorrelate(x, max_size=512) # 잡음을 줄이기 위한 autocorrelation - noise reduction
+        x, x_interval = np.linspace(0, 44100 / 2, n / 2, retstep=True)  # x는 주파수 영역
+        y = librosa.autocorrelate(x, max_size=512)  # 잡음을 줄이기 위한 autocorrelation - noise reduction
         y = np.fft.fft(data) / n  # 푸리에 변환
         y = np.absolute(y)
         y = y[range(int(n / 2))]
         origin_y = copy.copy(y)  # y값은 함수(..decrease)에 의해 변환되기 때문에 원래 y값을 미리 저장한다.
 
-        # 푸리에 변환된 데이터의 총 양 계산 -> 시작점 찾기에 사용할 수 있음
-        sum_y = np.sum(y) * 1e2
-        sum_data_list.append(sum_now_data)
-        sum_y_list.append(sum_y)  # 푸리에 변환된 데이터의 총 양 변화 그래프를 그리기 위함
-        # print('sum_y :', sum_y)
-
         # peak 값을 찾기 위한 임계점을 유동적으로 하기 위한 기준 잡기
         max_peak = 0
         std_peaks, _ = find_peaks(y, height=1500)  # 1500을 넘는 peak값을 찾는다. (max를 찾기 위한 표준 peak들)
-        # print('std_peak : ', std_peaks)
 
-        #  시작점 찾기와 관련된 부분
-        if sum_keep_data != 0:  # 시작점을 찾는 조건에 성립된 진폭 총량 값이 있을 때 진입
-            if sum_keep_data > sum_now_data:  # 이전 진폭 총량보다 현재 진폭 총량이 작으면(즉 이전이 peak였을 때) 진입
-                print(sum_keep_data_gyename)
-                press_point_x_list.append(press_point_count)
-                press_point_y_list.append(sum_keep_data)
-                sum_keep_data = 0
-            else:
-                sum_keep_data = sum_now_data  # 이전 진폭 총량이 peak점이 아니기 때문에 현재 진폭 총량을 keep_data로 저장
-
-
-        if len(std_peaks) > 0  and sum_now_data > (sum_before_data + 1000000) and \
-                sum_now_data > (sum_before_before_data + 2500000) and \
-                sum_now_data > 8000000:
-
-
+        if len(std_peaks) > 0 and now_rmse > 10000:
             max_peak = np.max(y[std_peaks])  # std_peaks에 있는 값들 중에서 가장 큰 값을 찾는다.
-            std_threshold = max_peak * 0.6  # max_peak을 이용하여 임계값을 설정한다.
+            std_threshold = max_peak * 0.35  # max_peak을 이용하여 임계값을 설정한다.
             peaks, _ = find_peaks(y, height=std_threshold)  # 임계값을 넘는 peak만 음으로 인식한다.
 
             gye_name = scale(peaks * x_interval)
-
             #  하모닉 음을 줄이기 위한 부분(치지 않은 음인데 친 음의 배수 라서 튄 계이름들)
             if not gye_name[0]:
                 continue
@@ -158,33 +149,12 @@ for i in range(0, 1000):
                 # print('peaks :  ', peaks1)
                 gye_name1 = scale(peaks1 * x_interval)
 
-            # if len(peaks1) > 0:
-            #     plt.plot(x, origin_y, 'r')
-            #     plt.plot(peaks * x_interval, y[peaks], "x")
-            #     plt.plot(x, y, 'b')
-            #     std_y = np.ones(int(n/2)) * std_threshold
-            #
-            #     plt.plot(x, std_y)
-            #     plt.annotate('threshold : %d' % (std_threshold), xy=(11, 10), xytext=(4000, 7500), size=10, ha='right', va='center')
-            #     plt.annotate('%s' % str(gye_name1), xy=(11, 10), xytext=(4000, 7000), size=10, ha='right', va='center')
-            #     plt.annotate('SUM_Y : %s' % str(sum_y), xy=(11, 10), xytext=(4000, 6500), size=10, ha='right', va='center')
-            #     plt.xlim(0, 4000)
-            #     plt.ylim(0, 8000)
-            #     plt.savefig('./save/figure_%d.png' %i)
-            #     plt.show()
-            if sum_keep_data == 0:  # sum_keep_data에 저장된 값이 없을 때(즉, 새로운 peak값을 찾을 때 진입)
-                sum_keep_data_gyename = copy.copy(gye_name1)  # 현재 계이름 데이터 저장
-                sum_keep_data = sum_now_data  # 현재 진폭 총량 저장
-        press_point_count = press_point_count + 1  # press_point 카운트
-    sum_before_before_data = sum_before_data
-    sum_before_data = sum_now_data
 
-plt.plot(sum_y_list, 'b')
-plt.plot(sum_data_list)
-plt.plot(sum_data_list, 'r*')
-plt.plot(press_point_x_list, press_point_y_list, 'yx')
 
-plt.savefig('figure.png')
+            keep_keep_rmse = keep_rmse
+            keep_rmse = now_rmse
+
+plt.plot(rmse_list)
 plt.show()
 stream.stop_stream()
 print('빠져나옴')
