@@ -100,17 +100,16 @@ press_point_x_list = []
 press_point_y_list = []
 press_point_count = 0
 
-for i in range(0, 500):
+for i in range(0, 2000):
     data = np.fromstring(stream.read(CHUNK), dtype=np.int16)  # 마이크에서 데이터를 읽어옴 (데이터 길이 1024)
     abs_data = np.abs(data)
     mean_abs_data = np.mean(abs_data)  # 데이터의 크기 분석(절대값 -> 평균)
-    sum_abs_data = np.sum(abs_data)  # 진폭의 총량 구하기
-    sum_now_data = sum_abs_data
+    sum_now_data = np.sum(abs_data)  # 진폭의 총량 구하기
+
     if mean_abs_data > 1000:  # 피아노 소리가 들리지 않을 때는 계산하지 않음 (들어온 데이터의 크기로 분석)
         n = len(data)
         x, x_interval = np.linspace(0, 44100 / 2,  n / 2, retstep=True)  # x는 주파수 영역
-        y = librosa.autocorrelate(x, max_size=512)
-        x1 = np.linspace(0, 44100 / 2, n)
+        y = librosa.autocorrelate(x, max_size=512) # 잡음을 줄이기 위한 autocorrelation - noise reduction
         y = np.fft.fft(data) / n  # 푸리에 변환
         y = np.absolute(y)
         y = y[range(int(n / 2))]
@@ -118,7 +117,7 @@ for i in range(0, 500):
 
         # 푸리에 변환된 데이터의 총 양 계산 -> 시작점 찾기에 사용할 수 있음
         sum_y = np.sum(y) * 1e2
-        sum_data_list.append(sum_abs_data)
+        sum_data_list.append(sum_now_data)
         sum_y_list.append(sum_y)  # 푸리에 변환된 데이터의 총 양 변화 그래프를 그리기 위함
         # print('sum_y :', sum_y)
 
@@ -127,7 +126,7 @@ for i in range(0, 500):
         std_peaks, _ = find_peaks(y, height=1500)  # 1500을 넘는 peak값을 찾는다. (max를 찾기 위한 표준 peak들)
         # print('std_peak : ', std_peaks)
 
-
+        #  시작점 찾기와 관련된 부분
         if sum_keep_data != 0:  # 시작점을 찾는 조건에 성립된 진폭 총량 값이 있을 때 진입
             if sum_keep_data > sum_now_data:  # 이전 진폭 총량보다 현재 진폭 총량이 작으면(즉 이전이 peak였을 때) 진입
                 print(sum_keep_data_gyename)
@@ -147,6 +146,7 @@ for i in range(0, 500):
 
             gye_name = scale(peaks * x_interval)
 
+            #  하모닉 음을 줄이기 위한 부분(치지 않은 음인데 친 음의 배수라서 튄 계이름들)
             if not gye_name[0]:
                 continue
             else:
@@ -154,8 +154,6 @@ for i in range(0, 500):
                 peaks1, _ = find_peaks(y, height=std_threshold)
                 # print('peaks :  ', peaks1)
                 gye_name1 = scale(peaks1 * x_interval)
-
-
 
                 press_point_x_list.append(press_point_count)
                 press_point_y_list.append(sum_now_data)
