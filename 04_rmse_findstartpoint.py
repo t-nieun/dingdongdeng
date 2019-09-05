@@ -25,8 +25,8 @@ def find_interval(fre_key):
                      369.9944: 'F#4', 391.9954: 'G4', 415.3047: 'G#4', 440.0000: 'A4', 466.1638: 'A#4', 493.8833: 'B4',
                      523.2511: 'C5', 554.3653: 'C#5', 587.3295: 'D5', 622.2540: 'D#5', 659.2551: 'E5', 698.4565: 'F5',
                      739.9888: 'F#5', 783.9909: 'G5', 830.6094: 'G#5', 880.0000: 'A5', 932.3275: 'A#5', 987.7666: 'B5',
-                     1046.502: 'C6', 1108.731: 'C#6', 1174.659: 'D6', 1244.508: 'D#6', 1318.510: 'E6', 1396.913: 'F6',
-                     1479.978: 'F#6', 1567.982: 'G6', 1661.219: 'G#6', 1760.000: 'A6', 1864.655: 'A#6', 1975.533: 'B6',
+                     1046.502: 'C6', 1108.731: 'C#6', 1174.659: 'D6', 1244.508: 'D#6', 1318.510: 'E     6', 1396.913: 'F6',
+                         1479.978: 'F#6', 1567.982: 'G6', 1661.219: 'G#6', 1760.000: 'A6', 1864.655: 'A#6', 1975.533: 'B6',
                      2093.005: 'C7', 2217.461: 'C#7', 2349.318: 'D7', 2489.016: 'D#7', 2637.020: 'E7', 2793.826: 'F7',
                      2959.955: 'F#7', 3135.963: 'G7', 3322.438: 'G#7', 3520.000: 'A7', 3729.310: 'A#7', 3951.066: 'B7',
                      4186.009: 'C8', 4434.922: 'C#8', 4698.636: 'D8', 4978.032: 'D#8', 5274.041: 'E8', 5587.652: 'F8',
@@ -52,7 +52,7 @@ def scale(note):
         a = find_nearest(fre_array, im)
         freq_arr.append(a)
         sound_arr.append(find_interval(a))
-    return sound_arr, freq_arr
+    return sound_arr, freq_arr, note
 
 
 # 주파수에 해당하는 index를 찾아주는 함수
@@ -66,22 +66,29 @@ def find_index(y_, up_value):
     df1 = df.query('vol >  %d' % (up_value))
     return df1['hz'].values
 
-
 # 배수로 감쇄하는 함수
 def multiple_freq_decrease(y_, peak_):
     if len(peak_) == 0:
         return -999
 
-    for i in range(len(peak_) - 1):  # 모든 피크에 대해서
+    if x[peak_[0]] < 260:
 
-        for j in range(2, 6):  # 기준 피크로 부터 4배수 까지 감쇄하는데 이때 감쇄하는 값의 양쪽 값과 자신을 감쇄
-            if (peak_[i] * j + 1) < 512:
-                y_[peak_[i] * j - 1] = y_[peak_[i] * j - 1] - y_[peak_[i]] ** ((1 / 2) ** (j - 1))
-                y_[peak_[i] * j] = y_[peak_[i] * j] - y_[peak_[i]] * ((1 / 2) ** (j - 1))
-                y_[peak_[i] * j + 1] = y_[peak_[i] * j + 1] - y_[peak_[i]] * ((1 / 2) ** (j - 1))
+        for i in range(len(peak_) - 1):  # 모든 피크에 대해서
+            for j in range(2, 6):  # 기준 피크로 부터 4배수 까지 감쇄하는데 이때 감쇄하는 값의 양쪽 값과 자신을 감쇄
+                if (peak_[i] * j + 1) < 512:
+                    y_[peak_[i] * j - 1] = y_[peak_[i] * j - 1] - y_[peak_[i]] ** ((1 / 1) ** (j - 1))
+                    y_[peak_[i] * j] = y_[peak_[i] * j] - y_[peak_[i]] * ((1 / 1) ** (j - 1))
+                    y_[peak_[i] * j + 1] = y_[peak_[i] * j + 1] - y_[peak_[i]] * ((1 / 1) ** (j - 1))
+    else:
+        for i in range(len(peak_) - 1):  # 모든 피크에 대해서
+            for j in range(2, 6):  # 기준 피크로 부터 4배수 까지 감쇄하는데 이때 감쇄하는 값의 양쪽 값과 자신을 감쇄
+                if (peak_[i] * j + 1) < 512:
+                    y_[peak_[i] * j - 1] = y_[peak_[i] * j - 1] - y_[peak_[i]] ** ((1 / 2) ** (j - 1))
+                    y_[peak_[i] * j] = y_[peak_[i] * j] - y_[peak_[i]] * ((1 / 2) ** (j - 1))
+                    y_[peak_[i] * j + 1] = y_[peak_[i] * j + 1] - y_[peak_[i]] * ((1 / 2) ** (j - 1))
     return y_
 
-CHUNK = 2048
+CHUNK = 4096
 RATE = 44100
 T = 1.0 / RATE
 p = pyaudio.PyAudio()
@@ -105,13 +112,13 @@ before_threshold = 0
 before_peaks = []
 
 
-for i in range(0, 100000):
+for i in range(0, 1000):
     data = np.fromstring(stream.read(CHUNK), dtype=np.int16)  # 마이크에서 데이터를 읽어옴 (데이터 길이 1024)
     n = len(data)
     now_rmse = np.linalg.norm(data - 0) / np.sqrt(n)
     rmse_list.append(now_rmse)
 
-    if now_rmse > 1000:  # 피아노 소리가 들리지 않을 때는 계산하지 않음 (들어온 데이터의 크기로 분석)
+    if now_rmse > 500:  # 피아노 소리가 들리지 않을 때는 계산하지 않음 (들어온 데이터의 크기로 분석)
 
         n = len(data)
 
@@ -133,6 +140,7 @@ for i in range(0, 100000):
                     np.abs(keep_keep_keeep_rmse - keep_rmse) > 1000:
                 press_point_x_list.append(i)
                 press_point_y_list.append(keep_rmse)
+
                 print(keep_gyename)
 
                 plt.plot(x, before_origin_y, 'b*')
@@ -144,9 +152,10 @@ for i in range(0, 100000):
                 plt.plot(x, std_y)
                 plt.annotate('threshold : %d' % (before_threshold), xy=(11, 10), xytext=(4000, 7500), size=10, ha='right',
                              va='center')
-                plt.annotate('%s' % str(gye_name1), xy=(11, 10), xytext=(4000, 10000000), size=10, ha='right', va='center')
-                plt.xlim(0, 4000)
-                plt.ylim(0, 12000000)
+                plt.annotate('%s' % str(gye_name1), xy=(11, 10), xytext=(500, 10000000), size=10, ha='right', va='center')
+                plt.xlim(0, 500)
+                plt.ylim(0, 20000000)
+                #plt.savefig('%d.png' %i)
                 plt.show()
 
             max_peak = np.max(y[std_peaks])  # std_peaks에 있는 값들 중에서 가장 큰 값을 찾는다.
