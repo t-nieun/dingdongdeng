@@ -168,10 +168,12 @@ for i in range(0, 1000):
                 continue
             else:
                 multiple_freq_decrease(y, peaks)
-
-                peaks1, _ = find_peaks(y, height=std_threshold)
+                peaks1 = find_peaks(y, height=std_threshold)
+                max_peak = np.max(y[peaks1])
+                new_threshold = max_peak * 0.6
+                peaks2, _ = find_peaks(y, height=new_threshold)
                 # print('peaks :  ', peaks1)
-                gye_name1 = scale(peaks1 * x_interval)
+                gye_name1 = scale(peaks2 * x_interval)
                 keep_gyename = gye_name1
 
             before_decrease_y = y
