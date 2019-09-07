@@ -2,7 +2,6 @@ import copy
 import pyaudio
 import numpy as np
 import pandas as pd
-import librosa
 import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
 from scipy.fftpack import fft
@@ -25,7 +24,7 @@ def find_interval(fre_key):
                      369.9944: 'F#4', 391.9954: 'G4', 415.3047: 'G#4', 440.0000: 'A4', 466.1638: 'A#4', 493.8833: 'B4',
                      523.2511: 'C5', 554.3653: 'C#5', 587.3295: 'D5', 622.2540: 'D#5', 659.2551: 'E5', 698.4565: 'F5',
                      739.9888: 'F#5', 783.9909: 'G5', 830.6094: 'G#5', 880.0000: 'A5', 932.3275: 'A#5', 987.7666: 'B5',
-                     1046.502: 'C6', 1108.731: 'C#6', 1174.659: 'D6', 1244.508: 'D#6', 1318.510: 'E     6', 1396.913: 'F6',
+                     1046.502: 'C6', 1108.731: 'C#6', 1174.659: 'D6', 1244.508: 'D#6', 1318.510: 'E6', 1396.913: 'F6',
                          1479.978: 'F#6', 1567.982: 'G6', 1661.219: 'G#6', 1760.000: 'A6', 1864.655: 'A#6', 1975.533: 'B6',
                      2093.005: 'C7', 2217.461: 'C#7', 2349.318: 'D7', 2489.016: 'D#7', 2637.020: 'E7', 2793.826: 'F7',
                      2959.955: 'F#7', 3135.963: 'G7', 3322.438: 'G#7', 3520.000: 'A7', 3729.310: 'A#7', 3951.066: 'B7',
@@ -52,7 +51,7 @@ def scale(note):
         a = find_nearest(fre_array, im)
         freq_arr.append(a)
         sound_arr.append(find_interval(a))
-    return sound_arr, freq_arr, note
+    return sound_arr, freq_arr  #, note
 
 
 # 주파수에 해당하는 index를 찾아주는 함수
@@ -66,26 +65,45 @@ def find_index(y_, up_value):
     df1 = df.query('vol >  %d' % (up_value))
     return df1['hz'].values
 
+
 # 배수로 감쇄하는 함수
-def multiple_freq_decrease(y_, peak_):
+def multiple_freq_decrease(y_, origin_y_, peak_):
     if len(peak_) == 0:
         return -999
+    for i in range(len(peak_) - 1):  # 모든 피크에 대해서
+        if x[peak_[0]] < 127:  # C1~B2
+            print('감지불가구간 : C1~B2')
 
-    if x[peak_[0]] < 260:
+        elif x[peak_[0]] < 214:  # C3~A3
+            for j in range(2, 6):  # 기준 피크로 부터 2배수는 자신의 3배만큼 감쇄하다가 뒤로갈수록 적게 감쇄 5배수경우 6/5배 감쇄
+                if (peak_[i] * j + 1) < 512:
+                    y_[peak_[i] * j - 1] = (origin_y_[peak_[i] * j - 1]) - abs(origin_y_[peak_[i]] * (6 / j))
+                    y_[peak_[i] * j] = (origin_y_[peak_[i] * j]) - abs(origin_y_[peak_[i]] * (6 / j))
+                    y_[peak_[i] * j + 1] = (origin_y_[peak_[i] * j + 1]) - abs(origin_y_[peak_[i]] * (6 / j))
+                    y_[peak_[i] * j + 2] = (origin_y_[peak_[i] * j + 2]) - abs(origin_y_[peak_[i]] * (6 / j))
 
-        for i in range(len(peak_) - 1):  # 모든 피크에 대해서
-            for j in range(2, 6):  # 기준 피크로 부터 4배수 까지 감쇄하는데 이때 감쇄하는 값의 양쪽 값과 자신을 감쇄
+        elif x[peak_[0]] < 391:  # B3~G4
+            for j in range(2, 6):  # 기준 피크로 부터 2배수는 자신의 4배만큼 감쇄하다가 뒤로갈수록 적게 감쇄 5배수경우 8/5배 감쇄
                 if (peak_[i] * j + 1) < 512:
-                    y_[peak_[i] * j - 1] = y_[peak_[i] * j - 1] - y_[peak_[i]] ** ((1 / 1) ** (j - 1))
-                    y_[peak_[i] * j] = y_[peak_[i] * j] - y_[peak_[i]] * ((1 / 1) ** (j - 1))
-                    y_[peak_[i] * j + 1] = y_[peak_[i] * j + 1] - y_[peak_[i]] * ((1 / 1) ** (j - 1))
-    else:
-        for i in range(len(peak_) - 1):  # 모든 피크에 대해서
+                    y_[peak_[i] * j - 2] = (origin_y_[peak_[i] * j - 2]) - abs(origin_y_[peak_[i]] * (8 / j))
+                    y_[peak_[i] * j - 1] = (origin_y_[peak_[i] * j - 1]) - abs(origin_y_[peak_[i]] * (8/j))
+                    y_[peak_[i] * j] = (origin_y_[peak_[i] * j]) - abs(origin_y_[peak_[i]] * (8/j))
+                    y_[peak_[i] * j + 1] = (origin_y_[peak_[i] * j + 1]) - abs(origin_y_[peak_[i]] * (8/j))
+                    y_[peak_[i] * j + 2] = (origin_y_[peak_[i] * j + 2]) - abs(origin_y_[peak_[i]] * (8 / j))
+                    y_[peak_[i] * j + 3] = (y_[peak_[i] * j + 3]) - abs(y_[peak_[i]] * (8/j))
+                    y_[peak_[i] * j + 4] = (y_[peak_[i] * j + 4]) - abs(y_[peak_[i]] * (8 / j))
+
+        else:  # A4~C7
             for j in range(2, 6):  # 기준 피크로 부터 4배수 까지 감쇄하는데 이때 감쇄하는 값의 양쪽 값과 자신을 감쇄
-                if (peak_[i] * j + 1) < 512:
-                    y_[peak_[i] * j - 1] = y_[peak_[i] * j - 1] - y_[peak_[i]] ** ((1 / 2) ** (j - 1))
-                    y_[peak_[i] * j] = y_[peak_[i] * j] - y_[peak_[i]] * ((1 / 2) ** (j - 1))
-                    y_[peak_[i] * j + 1] = y_[peak_[i] * j + 1] - y_[peak_[i]] * ((1 / 2) ** (j - 1))
+                # if (peak_[i] * j + 1) < 512:
+                # print('hell')
+                y_[peak_[i] * j - 2] = (origin_y_[peak_[i] * j - 2]) - abs(origin_y_[peak_[i]] ** ((1) ** (j - 1)))
+                y_[peak_[i] * j - 1] = (origin_y_[peak_[i] * j - 1]) - abs(origin_y_[peak_[i]] ** ((1) ** (j - 1)))
+                y_[peak_[i] * j] = (origin_y_[peak_[i] * j]) - abs(origin_y_[peak_[i]] * ((1) ** (j - 1)))
+                y_[peak_[i] * j + 1] = (origin_y_[peak_[i] * j + 1]) - abs(origin_y_[peak_[i]] * ((1) ** (j - 1)))
+                y_[peak_[i] * j + 2] = (origin_y_[peak_[i] * j + 2]) - abs(origin_y_[peak_[i]] * ((1) ** (j - 1)))
+
+    y_[peak_[0]] = y_[peak_[0]] * 2  # 저주파값 너무 낮아서 증폭시켜본것
     return y_
 
 CHUNK = 4096
@@ -112,7 +130,7 @@ before_threshold = 0
 before_peaks = []
 
 
-for i in range(0, 1000):
+for i in range(0, 10000):
     data = np.fromstring(stream.read(CHUNK), dtype=np.int16)  # 마이크에서 데이터를 읽어옴 (데이터 길이 1024)
     n = len(data)
     now_rmse = np.linalg.norm(data - 0) / np.sqrt(n)
@@ -146,20 +164,21 @@ for i in range(0, 1000):
                 plt.plot(x, before_origin_y, 'b*')
                 plt.plot(x, before_origin_y, 'g')
                 plt.plot(before_peaks * x_interval, y[before_peaks], "rx")
-                plt.plot(x, before_decrease_y, 'r')
+                plt.plot(x, before_decrease_y, 'r--')
 
                 std_y = np.ones(int(n / 2)) * before_threshold
                 plt.plot(x, std_y)
+                plt.plot(x, std_y*3)
                 plt.annotate('threshold : %d' % (before_threshold), xy=(11, 10), xytext=(4000, 7500), size=10, ha='right',
                              va='center')
-                plt.annotate('%s' % str(gye_name1), xy=(11, 10), xytext=(500, 10000000), size=10, ha='right', va='center')
-                plt.xlim(0, 500)
-                plt.ylim(0, 20000000)
+                plt.annotate('%s' % str(gye_name1), xy=(11, 10), xytext=(4000, 10000000), size=10, ha='right', va='center')
+                plt.xlim(0, 4000)
+                plt.ylim(0, 40000000)
                 #plt.savefig('%d.png' %i)
                 plt.show()
 
             max_peak = np.max(y[std_peaks])  # std_peaks에 있는 값들 중에서 가장 큰 값을 찾는다.
-            std_threshold = max_peak * 0.4  # max_peak을 이용하여 임계값을 설정한다.
+            std_threshold = max_peak * 0.2  # max_peak을 이용하여 임계값을 설정한다.
             peaks, _ = find_peaks(y, height=std_threshold)  # 임계값을 넘는 peak만 음으로 인식한다.
 
             gye_name = scale(peaks * x_interval)
@@ -167,12 +186,13 @@ for i in range(0, 1000):
             if not gye_name[0]:
                 continue
             else:
-                multiple_freq_decrease(y, peaks)
-                peaks1 = find_peaks(y, height=std_threshold)
+                multiple_freq_decrease(y, origin_y, peaks)
+                peaks1, _ = find_peaks(y, height=std_threshold)
+
                 max_peak = np.max(y[peaks1])
                 new_threshold = max_peak * 0.6
                 peaks2, _ = find_peaks(y, height=new_threshold)
-                # print('peaks :  ', peaks1)
+                # # print('peaks :  ', peaks1)
                 gye_name1 = scale(peaks2 * x_interval)
                 keep_gyename = gye_name1
 
@@ -184,8 +204,6 @@ for i in range(0, 1000):
     keep_keep_keeep_rmse = keep_keep_rmse
     keep_keep_rmse = keep_rmse
     keep_rmse = now_rmse
-
-
 
 
 plt.plot(rmse_list, 'bx')
