@@ -70,17 +70,19 @@ def find_index(y_, up_value):
 def multiple_freq_decrease(y_, origin_y_, peak_):
     if len(peak_) == 0:
         return -999
+
     for i in range(len(peak_) - 1):  # 모든 피크에 대해서
-        if x[peak_[0]] < 127:  # C1~B2
+        if x[peak_[0]] < 100:  # C1~B2
             print('감지불가구간 : C1~B2')
 
         elif x[peak_[0]] < 214:  # C3~A3
-            for j in range(2, 6):  # 기준 피크로 부터 2배수는 자신의 3배만큼 감쇄하다가 뒤로갈수록 적게 감쇄 5배수경우 6/5배 감쇄
+            y_[peak_[0]] = y_[peak_[0]] * 3  # 저주파값 너무 낮아서 증폭시켜본것
+            for j in range(2, 6):  # 기준 피크로 부터 2배수는 자신의 1배만큼 감쇄하다가 뒤로갈수록 적게 감쇄 5배수경우 6/5배 감쇄
                 if (peak_[i] * j + 1) < 512:
-                    y_[peak_[i] * j - 1] = (origin_y_[peak_[i] * j - 1]) - abs(origin_y_[peak_[i]] * (6 / j))
-                    y_[peak_[i] * j] = (origin_y_[peak_[i] * j]) - abs(origin_y_[peak_[i]] * (6 / j))
-                    y_[peak_[i] * j + 1] = (origin_y_[peak_[i] * j + 1]) - abs(origin_y_[peak_[i]] * (6 / j))
-                    y_[peak_[i] * j + 2] = (origin_y_[peak_[i] * j + 2]) - abs(origin_y_[peak_[i]] * (6 / j))
+                    y_[peak_[i] * j - 1] = (origin_y_[peak_[i] * j - 1]) - abs(origin_y_[peak_[i]] * (2 / j))
+                    y_[peak_[i] * j] = (origin_y_[peak_[i] * j]) - abs(origin_y_[peak_[i]] * (2 / j))
+                    y_[peak_[i] * j + 1] = (origin_y_[peak_[i] * j + 1]) - abs(origin_y_[peak_[i]] * (2 / j))
+                    y_[peak_[i] * j + 2] = (origin_y_[peak_[i] * j + 2]) - abs(origin_y_[peak_[i]] * (2 / j))
 
         elif x[peak_[0]] < 391:  # B3~G4
             for j in range(2, 6):  # 기준 피크로 부터 2배수는 자신의 4배만큼 감쇄하다가 뒤로갈수록 적게 감쇄 5배수경우 8/5배 감쇄
@@ -103,7 +105,6 @@ def multiple_freq_decrease(y_, origin_y_, peak_):
                 y_[peak_[i] * j + 1] = (origin_y_[peak_[i] * j + 1]) - abs(origin_y_[peak_[i]] * ((1) ** (j - 1)))
                 y_[peak_[i] * j + 2] = (origin_y_[peak_[i] * j + 2]) - abs(origin_y_[peak_[i]] * ((1) ** (j - 1)))
 
-    y_[peak_[0]] = y_[peak_[0]] * 2  # 저주파값 너무 낮아서 증폭시켜본것
     return y_
 
 CHUNK = 4096
@@ -143,6 +144,7 @@ for i in range(0, 10000):
         x, x_interval = np.linspace(0, 44100/2, n/2, retstep=True)  # x는 주파수 영역
         # data = librosa.autocorrelate(data, max_size=512)  # 잡음을 줄이기 위한 autocorrelation - noise reduction
         y = fft(data, n)  # 푸리에 변환
+        #퓨리에트랜스폼 된 데이터 분석 후 고주파일때만 증폭
 
         y = np.absolute(y)
         y = y[range(int(n / 2))]
@@ -152,7 +154,7 @@ for i in range(0, 10000):
         max_peak = 0
         std_peaks, _ = find_peaks(y, height=1500)  # 1500을 넘는 peak값을 찾는다. (max를 찾기 위한 표준 peak들)
 
-        if len(std_peaks) > 0 and now_rmse > 4000:
+        if len(std_peaks) > 0 and now_rmse > 1000:
 
             if keep_keep_rmse < keep_rmse and keep_rmse > now_rmse and keep_keep_keeep_rmse < keep_rmse and \
                     np.abs(keep_keep_keeep_rmse - keep_rmse) > 1000:
@@ -160,7 +162,10 @@ for i in range(0, 10000):
                 press_point_y_list.append(keep_rmse)
 
                 print(keep_gyename)
-
+                # for i in keep_gyename[1]:
+                #     yyy = find_index(before_decrease_y, keep_gyename[1][i])
+                # print('yyy: ', yyy)
+                plt.plot(keep_gyename[1], )
                 plt.plot(x, before_origin_y, 'b*')
                 plt.plot(x, before_origin_y, 'g')
                 plt.plot(before_peaks * x_interval, y[before_peaks], "rx")
@@ -172,13 +177,13 @@ for i in range(0, 10000):
                 plt.annotate('threshold : %d' % (before_threshold), xy=(11, 10), xytext=(4000, 7500), size=10, ha='right',
                              va='center')
                 plt.annotate('%s' % str(gye_name1), xy=(11, 10), xytext=(4000, 10000000), size=10, ha='right', va='center')
-                plt.xlim(0, 4000)
+                plt.xlim(0, 4000)#
                 plt.ylim(0, 40000000)
                 #plt.savefig('%d.png' %i)
                 plt.show()
 
             max_peak = np.max(y[std_peaks])  # std_peaks에 있는 값들 중에서 가장 큰 값을 찾는다.
-            std_threshold = max_peak * 0.2  # max_peak을 이용하여 임계값을 설정한다.
+            std_threshold = 0.35*1e7  # max_peak을 이용하여 임계값을 설정한다.
             peaks, _ = find_peaks(y, height=std_threshold)  # 임계값을 넘는 peak만 음으로 인식한다.
 
             gye_name = scale(peaks * x_interval)
