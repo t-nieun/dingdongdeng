@@ -84,18 +84,6 @@ def scale(note):
     return sound_arr, freq_arr, freq_idx_arr
 
 
-# 주파수에 해당하는 index를 찾아주는 함수
-def find_index(y_, up_value):
-    x_len = len(y_)
-    x_ = np.linspace(0, 22050, x_len)
-    x_ = x_.reshape(x_len, 1)
-    y_ = y_.reshape(x_len, 1)
-    xy_ = np.concatenate((x_, y_), axis=1)
-    df = pd.DataFrame(xy_, columns=['hz', 'vol'], )
-    df1 = df.query('vol >  %d' % (up_value))
-    return df1['hz'].values
-
-
 # 배수로 감쇄하는 함수
 def multiple_freq_decrease(y_, origin_y_, peak_):
     if len(peak_) == 0:
@@ -179,33 +167,50 @@ def matching():
     matching_gyename = real_note[0]
 
     while(1):
+        print("note_match_point : ", note_match_point)
+        print("real_note : ", len(real_note))
         if sheet_match_point == len(sheet) - 3:
             return -1000
         else:
             if len(real_note) > 1:
+                if len(real_note) > note_match_point:
 
-                if len(wait_matching_gyename) > 0:
-                    match_matrix.append(sheet[sheet_match_point + 3])  # 악보 상에서 4개 묶기
-                    wait_matching_gyename.append(matching_gyename)  # 기다린 음이랑 다음 음 2개 묶기
+                    if len(wait_matching_gyename) > 0:
+                        match_matrix.append(sheet[sheet_match_point + 3])  # 악보 상에서 4개 묶기
+                        wait_matching_gyename.append(matching_gyename)  # 기다린 음이랑 다음 음 2개 묶기
 
-                    try:  # 안친거! 안쳐서 틀렸음!
-                        a = match_matrix.index(wait_matching_gyename[0])
-                        b = match_matrix.index(wait_matching_gyename[1])
-                        if (b - a) == 1:  # match_matrix에 그 2개 묶은게 있음
-                            if a == 1:
-                                sheet_match_point = sheet_match_point + 1
-                                matching_gyename = wait_matching_gyename[0]
-                                print('1개 안쳤어!! 너무해..ㅠㅠ')
-                            elif a == 2:
-                                sheet_match_point = sheet_match_point + 2
-                                matching_gyename = wait_matching_gyename[0]
-                                print('2개 안쳤어!! 너무해..ㅠㅠ')
+                        try:  # 안친거! 안쳐서 틀렸음!
+                            a = match_matrix.index(wait_matching_gyename[0])
+                            b = match_matrix.index(wait_matching_gyename[1])
+                            if (b - a) == 1:  # match_matrix에 그 2개 묶은게 있음
+                                if a == 1:
+                                    sheet_match_point = sheet_match_point + 1
+                                    matching_gyename = wait_matching_gyename[0]
+                                    print('1개 안쳤어!! 너무해..ㅠㅠ')
+                                elif a == 2:
+                                    sheet_match_point = sheet_match_point + 2
+                                    matching_gyename = wait_matching_gyename[0]
+                                    print('2개 안쳤어!! 너무해..ㅠㅠ')
+                                else:
+                                    print('망함 다시쳐')
+                                match_matrix = []
+                                wait_matching_gyename = []
+
                             else:
-                                print('망함 다시쳐')
-                            match_matrix = []
-                            wait_matching_gyename = []
+                                print('음 틀렸음 : ', wait_matching_gyename[0])
+                                matching_gyename = wait_matching_gyename[1]
+                                wait_matching_gyename = []
+                                match_matrix = []
+                                sheet_match_point = sheet_match_point + 1
+                                note_match_point = note_match_point + 1
 
-                        else:
+
+
+                            # 악보에 return하는 표시해야 함!!
+
+
+                            # return (sheet_match_point - 1)  # match_point index를 갖는 곳에(악보에) 틀림 표시
+                        except ValueError:  # 음을 틀렸음!
                             print('음 틀렸음 : ', wait_matching_gyename[0])
                             matching_gyename = wait_matching_gyename[1]
                             wait_matching_gyename = []
@@ -213,40 +218,23 @@ def matching():
                             sheet_match_point = sheet_match_point + 1
                             note_match_point = note_match_point + 1
 
-
-
-                        # 악보에 return하는 표시해야 함!!
-
-
-                        return (sheet_match_point - 1)  # match_point index를 갖는 곳에(악보에) 틀림 표시
-                    except ValueError:  # 음을 틀렸음!
-                        print('음 틀렸음 : ', wait_matching_gyename[0])
-                        matching_gyename = wait_matching_gyename[1]
-                        wait_matching_gyename = []
-                        match_matrix = []
-                        sheet_match_point = sheet_match_point + 1
-                        note_match_point = note_match_point + 1
-
-                        return (sheet_match_point - 1)
-
-
-                else:
-                    for i in range(0, 3):
-                        match_matrix.append(sheet[sheet_match_point + i])
-
-                    if IsIt_correct(match_matrix[0], matching_gyename) == 1:
-                        print('matching! gyename :', matching_gyename)
-                        sheet_match_point = sheet_match_point + 1
-                        note_match_point = note_match_point + 1
-                        match_matrix = []
-                        matching_gyename = real_note[note_match_point]
-                        return -1
+                        # return (sheet_match_point - 1)
                     else:
-                        print('기다려 : ', matching_gyename)
-                        wait_matching_gyename.append(matching_gyename)
-                        matching_gyename = real_note[note_match_point + 1]
-                        return -1
+                        for i in range(0, 3):
+                            match_matrix.append(sheet[sheet_match_point + i])
 
+                        if IsIt_correct(match_matrix[0], matching_gyename) == 1:
+                            print('matching! gyename :', matching_gyename)
+                            sheet_match_point = sheet_match_point + 1
+                            note_match_point = note_match_point + 1
+                            match_matrix = []
+                            matching_gyename = real_note[note_match_point]
+                            # return -1
+                        else:
+                            print('기다려 : ', matching_gyename)
+                            wait_matching_gyename.append(matching_gyename)
+                            matching_gyename = real_note[note_match_point + 1]
+                            # return -1
 
 
 
@@ -288,7 +276,7 @@ def audio_read():
         n = len(data)
         now_rmse = np.linalg.norm(data - 0) / np.sqrt(n)
         rmse_list.append(now_rmse)
-        if now_rmse > 1000:  # 피아노 소리가 들리지 않을 때는 계산하지 않음 (들어온 데이터의 크기로 분석)
+        if now_rmse > 2000:  # 피아노 소리가 들리지 않을 때는 계산하지 않음 (들어온 데이터의 크기로 분석)
 
             n = len(data)
 
@@ -310,9 +298,9 @@ def audio_read():
                     # press_point_x_list.append(i)
                     # press_point_y_list.append(keep_rmse)
 
-                    print(keep_gyename[0])
+                    # print(keep_gyename[0])
                     real_note.append(keep_gyename[0])
-                    print('real_note : ', real_note)
+                    # print('real_note : ', real_note)
 
 
                     # plt.plot(keep_gyename[1],)

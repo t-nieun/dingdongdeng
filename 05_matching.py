@@ -11,12 +11,23 @@ import threading
 # sheet = [['C4'],['E4', 'G4'], ['G5'], ['C6'], ['D6'], ['E6'], ['A3', 'E4', 'D6'], ['C6'], ['C6'], ['F3','C4'],
 #          ['G5'],['C6'],['D6'],['E6'],['G3','D6'],['C6'],['D6'],['B3','D4'],['E6'],['E6'],['C4'],['E4','G4'],['D5'],['C6'],
 #          ['D6'],['E6'],['A3','E4','D6'],['C6'],['C6'],['F3','C4'],['G5'],['C6'],['D6'],['E6'], ['G3','D6'],['C6'],['D6'],['B3','D4'],['G6'],['E6']]
+
+# sheet = [['C3'], ['G3', 'E3'], ['G4'], ['C5'], ['D5'], ['E5'], ['A2', 'D5', 'E3'], ['C5'], ['C5'],
+#          ['C3', 'F2'], ['G4'], ['C5'], ['D5'], ['E5'], ['G2', 'D5'], ['C5'], ['D5'], ['D3', 'B2'],
+#          ['E5'], ['E5'], ['C3'], ['G3', 'E3'], ['G4'], ['C5'], ['D5'], ['E5'], ['A2', 'D5', 'E3'],
+#          ['C5'], ['C5'], ['C3', 'F2'], ['G4'], ['C5'], ['D5'], ['E5'], ['G2', 'D5'], ['C5'], ['D5'],
+#          ['D3', 'B2'], ['G5'], ['E5'], ['C3'], ['E3', 'G3'], ['E5'], ['F5'], ['G2', 'G5'], ['G5'],
+#          ['G5'], ['D3', 'B2'], ['G5'], ['G5', 'F2'], ['E5'], ['C5'], ['C3', 'A2'], ['E5'], ['F5'],
+#          ['G5', 'E2'], ['G5'], ['G5'], ['G2', 'B2'], ['G5'], ['A2', 'G5'], ['E5'], ['C5'], ['C3', 'E3'],
+#          ['C5'], ['D5'], ['F2', 'E5'], ['E5'], ['E5'], ['A2', 'C3'], ['E5'], ['E5', 'F2'], ['A5'],
+#          ['D5', 'C3', 'A2'], ['E5'], ['D5'], ['C5'], ['D5', 'G2'], ['B2', 'D5', 'D3'], ['A4'], ['A4'],
+#          ['D3', 'G2', 'D5'], ['B4'], ['G4'], ['C5'], ['D5'], ['E5']]
 # real_note = [['C4'],['E4', 'G4'], ['G5'], ['E6'], ['A3', 'E4', 'E6'], ['C6'], ['C6'], ['F3','C4'],['G5'],['C6'],['D6'],
 #              ['E6'],['G3','D6'],['C6'],['D6'],['B3','D4'],['E6'],['E6'],['C4'],['E4','G4'],['D5'],['C6'],['D6'],['E6'],
 #              ['A3','E4','D6'],['C6'],['C6'],['F3','C4'],['G5'],['C6'],['D6'],['E6'],['G3','D6'],['C6'],['D6'],['B3','D4'],['G6'],['E6']]
 
-sheet = [['도'],['레'],['미'],['파'],['솔'],['라'],['시'],['도'],['레'],['미']]
-real_note = [['도'],['레'],['파'],['솔'],['솔'],['시'],['도'],['레'],['미']]
+sheet = [['도'],['레','미','파'],['미'],['파'],['솔'],['라'],['시'],['도'],['레'],['미']]
+real_note = [['도'],['파'],['파'],['솔'],['솔'],['시'],['도'],['레'],['미']]
 
 wait_matching_gyename = []
 matching_gyename = []
@@ -30,7 +41,15 @@ matching_result = -1
 
 
 
+def IsIt_correct(three_matrix_, matching_gyename_):
+    count = 0
+    for i in range(0, len(matching_gyename_)):
+        count = count + three_matrix_.count(matching_gyename_[i])
 
+    if count / len(three_matrix_) >= 0.5:
+        return 1
+    else:
+        return -999
 
 
 def matching():
@@ -75,8 +94,6 @@ def matching():
                         sheet_match_point = sheet_match_point + 1
                         note_match_point = note_match_point + 1
 
-
-
                     # 악보에 return하는 표시해야 함!!
 
 
@@ -96,7 +113,7 @@ def matching():
                 for i in range(0, 3):
                     match_matrix.append(sheet[sheet_match_point + i])
 
-                if match_matrix[0] == matching_gyename:
+                if IsIt_correct(match_matrix[0], matching_gyename) == 1:
                     print('matching! gyename :', matching_gyename)
                     sheet_match_point = sheet_match_point + 1
                     note_match_point = note_match_point + 1
