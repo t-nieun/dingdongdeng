@@ -1,27 +1,20 @@
 import copy
 import pyaudio
 import numpy as np
-import pandas as pd
-import librosa
-import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
 from scipy.fftpack import fft
 import threading
+import matplotlib.pyplot as plt
 
 sheet = [['C4'],['E4', 'G4'], ['G5'], ['C6'], ['D6'], ['E6'], ['A3', 'E4', 'D6'], ['C6'], ['C6'], ['F3','C4'],
          ['G5'],['C6'],['D6'],['E6'],['G3','D6'],['C6'],['D6'],['B3','D4'],['E6'],['E6'],['C4'],['E4','G4'],['D5'],['C6'],
          ['D6'],['E6'],['A3','E4','D6'],['C6'],['C6'],['F3','C4'],['G5'],['C6'],['D6'],['E6'], ['G3','D6'],['C6'],['D6'],['B3','D4'],['G6'],['E6']]
-# real_note = [['C4'],['E4', 'G4'], ['G5'], ['E6'], ['A3', 'E4', 'E6'], ['C6'], ['C6'], ['F3','C4'],['G5'],['C6'],['D6'],
-#              ['E6'],['G3','D6'],['C6'],['D6'],['B3','D4'],['E6'],['E6'],['C4'],['E4','G4'],['D5'],['C6'],['D6'],['E6'],
-#              ['A3','E4','D6'],['C6'],['C6'],['F3','C4'],['G5'],['C6'],['D6'],['E6'],['G3','D6'],['C6'],['D6'],['B3','D4'],['G6'],['E6']]
 
-# sheet = [['도'],['레'],['미'],['파'],['솔'],['라'],['시'],['도'],['레'],['미']]
+
+
 real_note = []
-
 wait_matching_gyename = []
 matching_gyename = []
-
-
 sheet_match_point = 0
 note_match_point = 0
 match_matrix = []
@@ -34,9 +27,12 @@ lock = threading.Lock()
 def find_nearest(array, value):
     idx = (np.abs(array - value)).argmin()  # array 내의 값에서 value를 뺀 후 0에 가장 가까운 값을 value와 가장 가깝다고 판단
     return array[idx]
+
+
 def find_nearest_idx(array, value):
     idx = (np.abs(array - value)).argmin()  # array 내의 값에서 value를 뺀 후 0에 가장 가까운 값을 value와 가장 가깝다고 판단
     return idx
+
 
 # fre_key(인자)가 해당하는 계이름을 찾아주는 함수
 def find_interval(fre_key):
@@ -139,6 +135,7 @@ def move_threshold(now_rmse_):
 
     return new_threshold
 
+
 def IsIt_correct(three_matrix_, matching_gyename_):
     count = 0
     for i in range(0, len(matching_gyename_)):
@@ -148,6 +145,7 @@ def IsIt_correct(three_matrix_, matching_gyename_):
         return 1
     else:
         return -999
+
 
 # matching하는 쓰레드 함수
 def matching():
@@ -160,20 +158,18 @@ def matching():
     global match_matrix
 
     while(1):
-        if len(real_note) > 2:
+        if len(real_note) > 0:
             break
-        print("기다리는 중")
+        # print("기다리는 중")
 
     matching_gyename = real_note[0]
 
     while(1):
-        print("note_match_point : ", note_match_point)
-        print("real_note : ", len(real_note))
         if sheet_match_point == len(sheet) - 3:
             return -1000
         else:
             if len(real_note) > 1:
-                if len(real_note) > note_match_point:
+                if len(real_note) > note_match_point + 1:
 
                     if len(wait_matching_gyename) > 0:
                         match_matrix.append(sheet[sheet_match_point + 3])  # 악보 상에서 4개 묶기
@@ -186,37 +182,36 @@ def matching():
                                 if a == 1:
                                     sheet_match_point = sheet_match_point + 1
                                     matching_gyename = wait_matching_gyename[0]
-                                    print('1개 안쳤어!! 너무해..ㅠㅠ')
+                                    # print('1개 안침')
                                 elif a == 2:
                                     sheet_match_point = sheet_match_point + 2
                                     matching_gyename = wait_matching_gyename[0]
-                                    print('2개 안쳤어!! 너무해..ㅠㅠ')
+                                    # print('2개 안침')
                                 else:
-                                    print('망함 다시쳐')
+                                    print('망했음.')
                                 match_matrix = []
                                 wait_matching_gyename = []
 
                             else:
-                                print('음 틀렸음 : ', wait_matching_gyename[0])
+                                print('  x   : ', sheet[sheet_match_point])
                                 matching_gyename = wait_matching_gyename[1]
                                 wait_matching_gyename = []
+                                real_note = []
                                 match_matrix = []
-                                sheet_match_point = sheet_match_point + 1
-                                note_match_point = note_match_point + 1
-
-
+                                # sheet_match_point = sheet_match_point + 1
+                                note_match_point = 0
 
                             # 악보에 return하는 표시해야 함!!
 
-
                             # return (sheet_match_point - 1)  # match_point index를 갖는 곳에(악보에) 틀림 표시
                         except ValueError:  # 음을 틀렸음!
-                            print('음 틀렸음 : ', wait_matching_gyename[0])
+                            print('  x   :', sheet[sheet_match_point])
                             matching_gyename = wait_matching_gyename[1]
                             wait_matching_gyename = []
+                            real_note = []
                             match_matrix = []
-                            sheet_match_point = sheet_match_point + 1
-                            note_match_point = note_match_point + 1
+                            # sheet_match_point = sheet_match_point + 1
+                            note_match_point = 0
 
                         # return (sheet_match_point - 1)
                     else:
@@ -224,20 +219,18 @@ def matching():
                             match_matrix.append(sheet[sheet_match_point + i])
 
                         if IsIt_correct(match_matrix[0], matching_gyename) == 1:
-                            print('matching! gyename :', matching_gyename)
+                            print('  O   :', matching_gyename)
                             sheet_match_point = sheet_match_point + 1
                             note_match_point = note_match_point + 1
                             match_matrix = []
+
                             matching_gyename = real_note[note_match_point]
                             # return -1
                         else:
-                            print('기다려 : ', matching_gyename)
+                            # print('기다려 : ', matching_gyename)
                             wait_matching_gyename.append(matching_gyename)
                             matching_gyename = real_note[note_match_point + 1]
                             # return -1
-
-
-
 
 
 def audio_read():
@@ -297,11 +290,11 @@ def audio_read():
                         np.abs(keep_keep_keeep_rmse - keep_rmse) > 1000:
                     # press_point_x_list.append(i)
                     # press_point_y_list.append(keep_rmse)
-
+                    lock.acquire()
                     # print(keep_gyename[0])
                     real_note.append(keep_gyename[0])
                     # print('real_note : ', real_note)
-
+                    lock.release()
 
                     # plt.plot(keep_gyename[1],)
                     # plt.plot(x, before_origin_y, 'b*')
@@ -326,7 +319,7 @@ def audio_read():
                     # plt.xlim(0, 4000)
                     # plt.ylim(0, 30000000)
                     # plt.show()
-                    now_rmse_all_list.append(keep_rmse)
+                    # now_rmse_all_list.append(keep_rmse)
 
                 max_peak = np.max(y[std_peaks])  # std_peaks에 있는 값들 중에서 가장 큰 값을 찾는다.
                 std_threshold = move_threshold(now_rmse)  # max_peak을 이용하여 임계값을 설정한다.
@@ -364,10 +357,3 @@ my_thread2 = threading.Thread(target=audio_read)
 
 my_thread2.start()
 my_thread1.start()
-
-
-
-# plt.plot(rmse_list, 'bx')
-# plt.plot(rmse_list, 'g')
-# plt.plot(press_point_x_list, press_point_y_list, 'r*')
-# plt.show()
