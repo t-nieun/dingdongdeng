@@ -36,7 +36,7 @@ def find_nearest_idx(array, value):
 
 # fre_key(인자)가 해당하는 계이름을 찾아주는 함수
 def find_interval(fre_key):
-    interval_Dict = {32.7032: 'C1', 34.6478: 'C#1', 36.7081: 'D1', 38.8909: 'D#1', 41.2034: 'E1', 43.6535: 'F1',
+    interval_Dict = {32.7032: 'C1', 36.7081: 'D1', 41.2034: 'E1', 43.6535: 'F1',
                      46.2493: 'F#1', 48.9994: 'G1', 51.9130: 'G#1', 55.0000: 'A1', 58.2705: 'A#1', 61.7354: 'B1',
                      65.4064: 'C2', 69.2957: 'C#2', 73.4162: 'D2', 77.7817: 'D#2', 82.4069: 'E2', 87.3071: 'F2',
                      92.4986: 'F#2', 97.9989: 'G2', 103.8262: 'G#2', 110.0000: 'A2', 116.5409: 'A#2', 123.4708: 'B2',
@@ -59,7 +59,7 @@ def find_interval(fre_key):
 # 양자화 해주는 함수
 def scale(note):
     fre_array = np.array(
-        [32.7032, 34.6478, 36.7081, 38.8909, 41.2034, 43.6535, 46.2493, 48.9994, 51.9130, 55.0000, 58.2705, 61.7354,
+        [32.7032,  36.7081, 41.2034, 43.6535, 46.2493, 48.9994, 51.9130, 55.0000, 58.2705, 61.7354,
          65.4064, 69.2957, 73.4162, 77.7817, 82.4069, 87.3071, 92.4986, 97.9989, 103.8262, 110.0000, 116.5409, 123.4708,
          130.8128, 138.5913, 146.8324, 155.5635, 164.8138, 174.6141, 184.9972, 195.9977, 207.6523, 220.0000, 266.0819,
          246.9417, 261.6256, 277.1826, 293.6648, 311.1270, 329.6276, 349.2282, 369.9944, 391.9954, 415.3047, 440.0000,
@@ -263,7 +263,7 @@ def audio_read():
         n = len(data)
         now_rmse = np.linalg.norm(data - 0) / np.sqrt(n)
         rmse_list.append(now_rmse)
-        if now_rmse > 2000:  # 피아노 소리가 들리지 않을 때는 계산하지 않음 (들어온 데이터의 크기로 분석)
+        if now_rmse > 500:  # 피아노 소리가 들리지 않을 때는 계산하지 않음 (들어온 데이터의 크기로 분석)
 
             n = len(data)
 
@@ -279,9 +279,9 @@ def audio_read():
             max_peak = 0
             std_peaks, _ = find_peaks(y, height=1500)  # 1500을 넘는 peak값을 찾는다. (max를 찾기 위한 표준 peak들)
 
-            if len(std_peaks) > 0 and now_rmse > 4000:
+            if len(std_peaks) > 0 and now_rmse > 600:
                 if keep_keep_rmse < keep_rmse and keep_rmse > now_rmse and keep_keep_keeep_rmse < keep_rmse and \
-                        np.abs(keep_keep_keeep_rmse - keep_rmse) > 1000:
+                        np.abs(keep_keep_keeep_rmse - keep_rmse) > 300:
                     # press_point_x_list.append(i)
                     # press_point_y_list.append(keep_rmse)
                     lock.acquire()
@@ -290,33 +290,33 @@ def audio_read():
                     # print('real_note : ', real_note)
                     lock.release()
 
-                    # plt.plot(keep_gyename[1],)
-                    # plt.plot(x, before_origin_y, 'b*')
-                    # plt.plot(x, before_origin_y, 'g')
-                    # plt.plot(before_peaks * x_interval, y[before_peaks], "rx")
-                    # plt.plot(x, before_decrease_y, 'r--')
-                    #
-                    # std_y = np.ones(int(n / 2)) * before_threshold
-                    # plt.plot(x, std_y)
-                    # plt.annotate('threshold : %d' % (before_threshold), xy=(11, 10), xytext=(4000, 7500), size=10, ha='right',
-                    #              va='center')
-                    # plt.annotate('%s' % str(gye_name1), xy=(11, 10), xytext=(4000, 10000000), size=10, ha='right', va='center')
-                    # plt.annotate('rmse : %s' % str(keep_rmse), xy=(11, 10), xytext=(4000, 20000000), size=10, ha='right',
-                    #              va='center')
-                    #
-                    # str_keep_peaks = str(keep_peaks) + str(scale(keep_peaks * x_interval)[0])
-                    # str_keep_peaks1 = str(keep_peaks1) + str(scale(keep_peaks1 * x_interval)[0])
-                    # plt.annotate('before_peaks : %s' % str_keep_peaks, xy=(11, 10), xytext=(4000, 24000000), size=10, ha='right',
-                    #              va='center')
-                    # plt.annotate('after_peaks : %s' % str_keep_peaks1, xy=(11, 10), xytext=(4000, 22000000), size=10, ha='right',
-                    #              va='center')
-                    # plt.xlim(0, 4000)
-                    # plt.ylim(0, 30000000)
-                    # plt.show()
-                    # now_rmse_all_list.append(keep_rmse)
+                    plt.plot(keep_gyename[1],)
+                    plt.plot(x, before_origin_y, 'b*')
+                    plt.plot(x, before_origin_y, 'g')
+                    plt.plot(before_peaks * x_interval, y[before_peaks], "rx")
+                    plt.plot(x, before_decrease_y, 'r--')
+
+                    std_y = np.ones(int(n / 2)) * before_threshold
+                    plt.plot(x, std_y)
+                    plt.annotate('threshold : %d' % (before_threshold), xy=(11, 10), xytext=(4000, 7500), size=10, ha='right',
+                                 va='center')
+                    plt.annotate('%s' % str(gye_name1), xy=(11, 10), xytext=(4000, 1000000), size=10, ha='right', va='center')
+                    plt.annotate('rmse : %s' % str(keep_rmse), xy=(11, 10), xytext=(4000, 2000000), size=10, ha='right',
+                                 va='center')
+
+                    str_keep_peaks = str(keep_peaks) + str(scale(keep_peaks * x_interval)[0])
+                    str_keep_peaks1 = str(keep_peaks1) + str(scale(keep_peaks1 * x_interval)[0])
+                    plt.annotate('before_peaks : %s' % str_keep_peaks, xy=(11, 10), xytext=(4000, 2400000), size=10, ha='right',
+                                 va='center')
+                    plt.annotate('after_peaks : %s' % str_keep_peaks1, xy=(11, 10), xytext=(4000, 2200000), size=10, ha='right',
+                                 va='center')
+                    plt.xlim(0, 4000)
+                    plt.ylim(0, 3000000)
+                    plt.show()
+                    now_rmse_all_list.append(keep_rmse)
 
                 max_peak = np.max(y[std_peaks])  # std_peaks에 있는 값들 중에서 가장 큰 값을 찾는다.
-                std_threshold = 0.35*1e7  # max_peak을 이용하여 임계값을 설정한다.
+                std_threshold = max_peak * 0.4  # max_peak을 이용하여 임계값을 설정한다.
                 peaks, _ = find_peaks(y, height=std_threshold)  # 임계값을 넘는 peak만 음으로 인식한다.
                 keep_peaks = peaks
                 gye_name = scale(peaks * x_interval)
