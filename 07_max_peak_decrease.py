@@ -79,49 +79,45 @@ def scale(note):
         sound_arr.append(find_interval(a))
     return sound_arr, freq_arr, freq_idx_arr
 
-
 # 배수로 감쇄하는 함수
 def multiple_freq_decrease(y_, origin_y_, peak_):
     if len(peak_) == 0:
         return -999
-    # print('peak :', peak_, 'x : ', peak_[0] * 21.533)
+    x, x_interval = np.linspace(0, 44100 / 2, 2048 / 2, retstep=True)  # x는 주파수 영역
+
     for i in range(len(peak_) - 1):  # 모든 피크에 대해서
-        if peak_[i] <= 9: # A3
-            y_[peak_[0]] = y_[peak_[0]] * 2  # 저주파값 너무 낮아서 증폭시켜본것
-            for j in range(2, 6):  # 기준 피크로 부터 4배수 까지 감쇄하는데 이때 감쇄하는 값의 양쪽 값과 자신을 감쇄
-                y_[peak_[i] * j - 1] = y_[peak_[i] * j - 1] - 6 * abs(origin_y_[peak_[i]] * ((1/4) ** (j - 1)))
-                y_[peak_[i] * j] = y_[peak_[i] * j] - 6 * abs(origin_y_[peak_[i]] * ((1/4) * (j - 1)))
-                y_[peak_[i] * j + 1] = y_[peak_[i] * j + 1] - 6 * abs(origin_y_[peak_[i]] * ((1 / 4) ** (j - 1)))
+        if x[peak_[0]] < 100:  # C1~B2
+            print('감지불가구간 : C1~B2')
 
-        elif peak_[i] <= 11: # B3
-            y_[peak_[0]] = y_[peak_[0]] * 2  # 저주파값 너무 낮아서 증폭시켜본것
-            for j in range(2, 6):  # 기준 피크로 부터 4배수 까지 감쇄하는데 이때 감쇄하는 값의 양쪽 값과 자신을 감쇄
-                y_[peak_[i] * j - 1] = y_[peak_[i] * j - 1] - 4 * abs(origin_y_[peak_[i]] * ((1/4) ** (j - 1)))
-                y_[peak_[i] * j] = y_[peak_[i] * j] - 4 * abs(origin_y_[peak_[i]] * ((1/4) * (j - 1)))
-                y_[peak_[i] * j + 1] = y_[peak_[i] * j + 1] - 4 * abs(origin_y_[peak_[i]] * ((1/4) ** (j - 1)))
-
-        elif peak_[i] <= 14:  # D4
-            y_[peak_[0]] = y_[peak_[0]] * 1.5  # 저주파값 너무 낮아서 증폭시켜본것
-            for j in range(2, 6):  # 기준 피크로 부터 4배수 까지 감쇄하는데 이때 감쇄하는 값의 양쪽 값과 자신을 감쇄
-                y_[peak_[i] * j - 1] = y_[peak_[i] * j - 1] - 3.5 * abs(origin_y_[peak_[i]] * ((1 / 4) ** (j - 1)))
-                y_[peak_[i] * j] = y_[peak_[i] * j] - 3.5 * abs(origin_y_[peak_[i]] * ((1 / 4) * (j - 1)))
-                y_[peak_[i] * j + 1] = y_[peak_[i] * j + 1] - 3.5 * abs(origin_y_[peak_[i]] * ((1 / 4) ** (j - 1)))
-
-        elif peak_[i] <= 30:  # E5
-            for j in range(2, 6):  # 기준 피크로 부터 4배수 까지 감쇄하는데 이때 감쇄하는 값의 양쪽 값과 자신을 감쇄
-                y_[peak_[i] * j - 1] = y_[peak_[i] * j - 1] - abs(origin_y_[peak_[i]] * ((1 / 2) ** (j - 1)))
-                y_[peak_[i] * j] = y_[peak_[i] * j] - abs(origin_y_[peak_[i]] * ((1 / 3) * (j - 1)))
-                y_[peak_[i] * j + 1] = y_[peak_[i] * j + 1] - abs(origin_y_[peak_[i]] * ((1 / 2) ** (j - 1)))
-
-        else:
-            for j in range(2, 6):  # 기준 피크로 부터 4배수 까지 감쇄하는데 이때 감쇄하는 값의 양쪽 값과 자신을 감쇄
+        elif x[peak_[0]] < 214:  # C3~A3
+            y_[peak_[0]] = y_[peak_[0]] * 3  # 저주파값 너무 낮아서 증폭시켜본것
+            for j in range(2, 6):  # 기준 피크로 부터 2배수는 자신의 1배만큼 감쇄하다가 뒤로갈수록 적게 감쇄 5배수경우 6/5배 감쇄
                 if (peak_[i] * j + 1) < 512:
-                    y_[peak_[i] * j - 2] = y_[peak_[i] * j - 2] - abs(origin_y_[peak_[i]] * ((1 / 2) ** (j - 1)))
-                    y_[peak_[i] * j - 1] = y_[peak_[i] * j - 1] - abs(origin_y_[peak_[i]] * ((1 / 2) ** (j - 1)))
-                    y_[peak_[i] * j] = y_[peak_[i] * j] - abs(origin_y_[peak_[i]] * ((1 / 3) * (j - 1)))
-                    y_[peak_[i] * j + 1] = y_[peak_[i] * j + 1] - abs(origin_y_[peak_[i]] * ((1 / 2) ** (j - 1)))
-                    y_[peak_[i] * j + 2] = y_[peak_[i] * j + 2] - abs(origin_y_[peak_[i]] * ((1 / 2) ** (j - 1)))
-    return y_
+                    y_[peak_[i] * j - 1] = (origin_y_[peak_[i] * j - 1]) - abs(origin_y_[peak_[i]] * (2 / j))
+                    y_[peak_[i] * j] = (origin_y_[peak_[i] * j]) - abs(origin_y_[peak_[i]] * (2 / j))
+                    y_[peak_[i] * j + 1] = (origin_y_[peak_[i] * j + 1]) - abs(origin_y_[peak_[i]] * (2 / j))
+                    y_[peak_[i] * j + 2] = (origin_y_[peak_[i] * j + 2]) - abs(origin_y_[peak_[i]] * (2 / j))
+
+        elif x[peak_[0]] < 391:  # B3~G4
+            for j in range(2, 6):  # 기준 피크로 부터 2배수는 자신의 4배만큼 감쇄하다가 뒤로갈수록 적게 감쇄 5배수경우 8/5배 감쇄
+                if (peak_[i] * j + 1) < 512:
+                    y_[peak_[i] * j - 2] = (origin_y_[peak_[i] * j - 2]) - abs(origin_y_[peak_[i]] * (8 / j))
+                    y_[peak_[i] * j - 1] = (origin_y_[peak_[i] * j - 1]) - abs(origin_y_[peak_[i]] * (8/j))
+                    y_[peak_[i] * j] = (origin_y_[peak_[i] * j]) - abs(origin_y_[peak_[i]] * (8/j))
+                    y_[peak_[i] * j + 1] = (origin_y_[peak_[i] * j + 1]) - abs(origin_y_[peak_[i]] * (8/j))
+                    y_[peak_[i] * j + 2] = (origin_y_[peak_[i] * j + 2]) - abs(origin_y_[peak_[i]] * (8 / j))
+                    y_[peak_[i] * j + 3] = (y_[peak_[i] * j + 3]) - abs(y_[peak_[i]] * (8/j))
+                    y_[peak_[i] * j + 4] = (y_[peak_[i] * j + 4]) - abs(y_[peak_[i]] * (8 / j))
+
+        else:  # A4~C7
+            for j in range(2, 6):  # 기준 피크로 부터 4배수 까지 감쇄하는데 이때 감쇄하는 값의 양쪽 값과 자신을 감쇄
+                # if (peak_[i] * j + 1) < 512:
+                # print('hell')
+                y_[peak_[i] * j - 2] = (origin_y_[peak_[i] * j - 2]) - abs(origin_y_[peak_[i]] ** ((1) ** (j - 1)))
+                y_[peak_[i] * j - 1] = (origin_y_[peak_[i] * j - 1]) - abs(origin_y_[peak_[i]] ** ((1) ** (j - 1)))
+                y_[peak_[i] * j] = (origin_y_[peak_[i] * j]) - abs(origin_y_[peak_[i]] * ((1) ** (j - 1)))
+                y_[peak_[i] * j + 1] = (origin_y_[peak_[i] * j + 1]) - abs(origin_y_[peak_[i]] * ((1) ** (j - 1)))
+                y_[peak_[i] * j + 2] = (origin_y_[peak_[i] * j + 2]) - abs(origin_y_[peak_[i]] * ((1) ** (j - 1)))
 
 
 def move_threshold(now_rmse_):
@@ -191,7 +187,7 @@ def matching():
                                 wait_matching_gyename = []
 
                             else:
-                                print('  x   : ', sheet[sheet_match_point])
+                                # print('  x   : ', sheet[sheet_match_point])
                                 matching_gyename = wait_matching_gyename[1]
                                 wait_matching_gyename = []
                                 real_note = []
@@ -203,7 +199,7 @@ def matching():
 
                             # return (sheet_match_point - 1)  # match_point index를 갖는 곳에(악보에) 틀림 표시
                         except ValueError:  # 음을 틀렸음!
-                            print('  x   :', sheet[sheet_match_point])
+                            # print('  x   :', sheet[sheet_match_point])
                             matching_gyename = wait_matching_gyename[1]
                             wait_matching_gyename = []
                             real_note = []
@@ -217,7 +213,7 @@ def matching():
                             match_matrix.append(sheet[sheet_match_point + i])
 
                         if IsIt_correct(match_matrix[0], matching_gyename) == 1:
-                            print('  O   :', match_matrix[0])
+                            # print('  O   :', match_matrix[0])
                             sheet_match_point = sheet_match_point + 1
                             note_match_point = note_match_point + 1
                             match_matrix = []
@@ -320,7 +316,7 @@ def audio_read():
                     # now_rmse_all_list.append(keep_rmse)
 
                 max_peak = np.max(y[std_peaks])  # std_peaks에 있는 값들 중에서 가장 큰 값을 찾는다.
-                std_threshold = move_threshold(now_rmse)  # max_peak을 이용하여 임계값을 설정한다.
+                std_threshold = 0.35*1e7  # max_peak을 이용하여 임계값을 설정한다.
                 peaks, _ = find_peaks(y, height=std_threshold)  # 임계값을 넘는 peak만 음으로 인식한다.
                 keep_peaks = peaks
                 gye_name = scale(peaks * x_interval)
